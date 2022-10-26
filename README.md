@@ -8,8 +8,6 @@
  ##
  Server-ul trebuie sa poata gestiona mai multe solicitari simultane, de aceea se vor utiliza mai multe thread-uri pentru a trata in paralel request-urile de pe fiecare conexiune.
  ##
- 
- ##
  ## _Planul de testare:_
  Pentru a testa functionalitatea serverului ne putem conecta direct din browser. Pentru a configura mai usor browser-ul sa acceseze serverul nostru vom utiliza extensia [FoxyProxy](https://getfoxyproxy.org/), in care vom adauga proxy-ul nostru: tip HTTP,pe adresa localhost: 0.0.0.0 , port 5555.
  ##
