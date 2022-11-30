@@ -7,7 +7,8 @@ int main()
     try{
     Proxy& httpProxy=Proxy::createInstance(serverIP,port);
     httpProxy.setListeningSocket();
-    httpProxy.startHandlingConnections();
+    httpProxy.startHandlingConnections(); 
+    
     }
     catch(...)
     {
