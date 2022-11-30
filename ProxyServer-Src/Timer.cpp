@@ -1,5 +1,5 @@
 #include "Timer.hpp"
-
+#include <time.h>
 std::string Timer::getCurrentDateTime(std::string s)
 {
     time_t now = time(0);
