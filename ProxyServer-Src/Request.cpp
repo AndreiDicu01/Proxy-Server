@@ -22,7 +22,8 @@ void Request::parse(std::string str)
     int i=0;
     std::string requestType;
     std::string hostLine;
-    m_req=str.substr(0,str.find("\r\n"));
+    m_req=str;
+    m_statusLine=str.substr(0,str.find("\r\n"));
     requestType=str.substr(0,str.find(" "));
     m_reqType=EnumConverter(requestType);
     int pos=str.find("Host: ");
@@ -62,4 +63,10 @@ std::string Request:: getRequest()
 Type Request:: getReqType()
 {
     return m_reqType;
+}
+
+
+std::string Request::getStatusLine()
+{
+    return m_statusLine;
 }

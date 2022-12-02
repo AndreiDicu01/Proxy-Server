@@ -30,6 +30,7 @@ class Proxy
     ~Proxy();
 
     int connectToRequestedWeb(std::string host,std::string port);
+    int GET_RequestHandle(Request& req, int clientSock,int serverSock);
     public:
     /*------------------------------------------------*/
 

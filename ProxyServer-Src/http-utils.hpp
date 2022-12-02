@@ -9,6 +9,7 @@
 namespace Utils
 {
 int ReadClientRequest(int fd, std::string& request);
+int ForwardRequest(int sock, std::string& request);
 
 }
 #endif

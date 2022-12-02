@@ -141,6 +141,19 @@ int Proxy:: connectToRequestedWeb(std::string host, std::string port)
     freeaddrinfo(list);
     return webSock;
 }
+
+int Proxy:: GET_RequestHandle(Request& req, int clientSock,int serverSock)
+{
+    if(Utils::ForwardRequest(serverSock,req.getRequest())<0)
+        {
+            std::cerr<<"Error forwarding request to server\n";
+            return -1;
+        }
+
+    
+
+
+}
 void Proxy::threadHandle(int clientSocket)
 {   
     int check;
