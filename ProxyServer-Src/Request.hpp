@@ -22,6 +22,7 @@ class Request
     std::string getPort();
     std::string getRequest();
     std::string getStatusLine();
+    std::string getHeader();
     Type getReqType();
 
 

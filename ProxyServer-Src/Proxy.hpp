@@ -11,6 +11,7 @@
 #include <cstdlib>
 #include <cstring>
 #define MAX_PENDING_CONNECTIONS 100
+class Request;
 class Proxy
 {
     private:

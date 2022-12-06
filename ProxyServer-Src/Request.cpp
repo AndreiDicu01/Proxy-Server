@@ -70,3 +70,11 @@ std::string Request::getStatusLine()
 {
     return m_statusLine;
 }
+
+std::string Request::getHeader()
+{
+    std::string delim="\r\n\r\n";
+    int poz=m_req.find(delim);
+
+    return m_req.substr(0,poz);
+}
