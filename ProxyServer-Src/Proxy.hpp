@@ -41,8 +41,8 @@ class Proxy
 
     void setListeningSocket();
     void startHandlingConnections();
-    void threadHandle(int clientSocket);
-   
+ 
+   friend  void threadHandle(Proxy& proxy,int sock);
 };
 
 #endif

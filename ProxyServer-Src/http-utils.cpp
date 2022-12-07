@@ -13,8 +13,9 @@ int Utils::ReadClientRequest(int fd, std::string& request)
         memset(temp,'\0',sizeof(temp));
         bytesRecieved=recv(fd,temp,2000,(int)NULL);
         if( bytesRecieved == -1)
-        return false;
+        return -1;
 
+        
         aux=temp;
         if(aux.find(reqEnd)!=std::string::npos)
         {

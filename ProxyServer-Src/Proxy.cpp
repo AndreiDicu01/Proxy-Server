@@ -173,19 +173,22 @@ int Proxy::GET_RequestHandle(Request &req, int clientSock, int serverSock)
 
     return 1;
 }
-void Proxy::threadHandle(int clientSocket)
+void threadHandle(Proxy& proxy,int clientSocket)
 {
+    std::cout<<"\nTHREAD HANDLE";
     int check;
     int webSock;
     std::string httpReq;
 
-    check = Utils::ReadClientRequest(clientSocket, httpReq);
+    if(check = Utils::ReadClientRequest(clientSocket, httpReq)==-1)
+        return;
     if (check == -1)
     {
         close(clientSocket);
         // handle error
         return;
     }
+    std::cout<<"\nAFTER";
     Request req(httpReq);
 
     std::string port;
@@ -198,7 +201,7 @@ void Proxy::threadHandle(int clientSocket)
               << "Recieved request: \n"
               << req.getHeader()
               << "\n-----------------------------------------------\n";
-    webSock = this->connectToRequestedWeb(req.getHost(), port);
+    webSock = proxy.connectToRequestedWeb(req.getHost(), port);
     if (webSock == -1)
     {
         fprintf(stderr, "error creating connections socket\n");
@@ -207,7 +210,7 @@ void Proxy::threadHandle(int clientSocket)
         return;
     }
 
-    this->GET_RequestHandle(req, clientSocket, webSock);
+    proxy.GET_RequestHandle(req, clientSocket, webSock);
     // redirect requests
 }
 void Proxy::startHandlingConnections()
@@ -224,8 +227,10 @@ void Proxy::startHandlingConnections()
             continue;
         printf("\n __CONN ACCEPTED\n");
 
-        /* JUST ONE THREAD FOR NOW*/
-        threadHandle(clientSocket);
+        /*JUST ONE THREAD FOR NOW*/
+        std::thread(threadHandle,std::ref(*this),clientSocket).detach();
+
+      
         close(clientSocket);
     }
 }
