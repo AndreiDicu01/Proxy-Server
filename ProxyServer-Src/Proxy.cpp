@@ -133,6 +133,19 @@ int Proxy::connectToRequestedWeb(std::string host, std::string port)
     freeaddrinfo(list);
     return webSock;
 }
+int Proxy::CONNECT_RequestHandle(int clientSock,int serverSock)
+{
+  if(Utils::EstablishHTTPTunnel(clientSock)==-1)
+    return -1;
+
+    if(Utils::HTTPTunneling(clientSock,serverSock)==-1)
+    return -1;
+
+
+    return 1;
+
+
+}
 
 int Proxy::GET_RequestHandle(Request &req, int clientSock, int serverSock)
 {
@@ -151,13 +164,14 @@ int Proxy::GET_RequestHandle(Request &req, int clientSock, int serverSock)
         return -1;
     }
     else if (check == CHUNKED_RESPONSE)
-    {
+    {   
+          
         if (Utils::RecieveChunked(clientSock, serverSock, response) == -1)
             return -1;
         close(serverSock);
     }
     else
-    {
+    {     
         if (Utils::RecieveUnChunkedResponse(serverSock, response) == -1)
         {
             std::cerr << "Error recieving unchunked response";
@@ -188,7 +202,7 @@ void threadHandle(Proxy& proxy,int clientSocket)
         // handle error
         return;
     }
-    std::cout<<"\nAFTER";
+   
     Request req(httpReq);
 
     std::string port;
@@ -199,7 +213,7 @@ void threadHandle(Proxy& proxy,int clientSocket)
 
     std::cout << "\n-----------------------------------------------\n"
               << "Recieved request: \n"
-              << req.getHeader()
+              << req.getStatusLine()
               << "\n-----------------------------------------------\n";
     webSock = proxy.connectToRequestedWeb(req.getHost(), port);
     if (webSock == -1)
@@ -210,7 +224,25 @@ void threadHandle(Proxy& proxy,int clientSocket)
         return;
     }
 
-    proxy.GET_RequestHandle(req, clientSocket, webSock);
+    Type header=req.getReqType();
+    switch(header)
+    {
+        case Type::GET:
+            proxy.GET_RequestHandle(req, clientSocket, webSock);
+            break;
+        case Type::CONNECT:
+            proxy.CONNECT_RequestHandle(clientSocket,webSock);
+            break;
+        case Type::POST:
+            proxy.GET_RequestHandle(req,clientSocket,webSock);
+            break;
+        default:
+            std::cerr<<"Unknown request type";
+        break;
+    }
+    
+    close(clientSocket);
+    close(webSock);
     // redirect requests
 }
 void Proxy::startHandlingConnections()
@@ -231,6 +263,8 @@ void Proxy::startHandlingConnections()
         std::thread(threadHandle,std::ref(*this),clientSocket).detach();
 
       
-        close(clientSocket);
+        
     }
+    close(clientSocket);
+
 }
