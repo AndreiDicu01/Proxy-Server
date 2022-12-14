@@ -1,6 +1,7 @@
 #include "Proxy.hpp"
 #include "http-utils.hpp"
 #include "Request.hpp"
+#include "Logger.hpp"
 Proxy *Proxy::m_ProxyInstance = nullptr;
 
 Proxy &Proxy::createInstance(std::string ip, std::string port)
@@ -133,7 +134,7 @@ int Proxy::connectToRequestedWeb(std::string host, std::string port)
     freeaddrinfo(list);
     return webSock;
 }
-int Proxy::CONNECT_RequestHandle(int clientSock,int serverSock)
+int Proxy::CONNECT_RequestHandle(int clientSock,int serverSock,int idCon)
 {
   if(Utils::EstablishHTTPTunnel(clientSock)==-1)
     return -1;
@@ -147,7 +148,7 @@ int Proxy::CONNECT_RequestHandle(int clientSock,int serverSock)
 
 }
 
-int Proxy::GET_RequestHandle(Request &req, int clientSock, int serverSock)
+int Proxy::GET_RequestHandle(Request &req, int clientSock, int serverSock,int idCon,std::string host)
 {
     int check;
     if (Utils::ForwardHTTP(serverSock, req.getRequest()) < 0)
@@ -158,6 +159,7 @@ int Proxy::GET_RequestHandle(Request &req, int clientSock, int serverSock)
 
     std::string response;
     check = Utils::RecieveResponse(serverSock, response);
+    
     if (check == -1)
     {
         std::cerr << "Error recieving response from server";
@@ -169,6 +171,7 @@ int Proxy::GET_RequestHandle(Request &req, int clientSock, int serverSock)
         if (Utils::RecieveChunked(clientSock, serverSock, response) == -1)
             return -1;
         close(serverSock);
+       //  Logger::logResponse(idCon,response,host);
     }
     else
     {     
@@ -183,11 +186,12 @@ int Proxy::GET_RequestHandle(Request &req, int clientSock, int serverSock)
             std::cerr << "Error sending unchunked";
             return -1;
         }
+        // Logger::logResponse(idCon,response,host);
     }
-
+   
     return 1;
 }
-void threadHandle(Proxy& proxy,int clientSocket)
+void threadHandle(Proxy& proxy,int clientSocket,int conId)
 {
     std::cout<<"\nTHREAD HANDLE";
     int check;
@@ -204,7 +208,7 @@ void threadHandle(Proxy& proxy,int clientSocket)
     }
    
     Request req(httpReq);
-
+    Logger::logRequest(conId,req);
     std::string port;
     if (req.getPort().size() == 0)
         port = "80"; // if no port is specified in the request, the default HTTP port is used
@@ -228,13 +232,13 @@ void threadHandle(Proxy& proxy,int clientSocket)
     switch(header)
     {
         case Type::GET:
-            proxy.GET_RequestHandle(req, clientSocket, webSock);
+            proxy.GET_RequestHandle(req, clientSocket, webSock,conId,req.getHost());
             break;
         case Type::CONNECT:
-            proxy.CONNECT_RequestHandle(clientSocket,webSock);
+            proxy.CONNECT_RequestHandle(clientSocket,webSock,conId);
             break;
         case Type::POST:
-            proxy.GET_RequestHandle(req,clientSocket,webSock);
+            proxy.GET_RequestHandle(req,clientSocket,webSock,conId,req.getHost());
             break;
         default:
             std::cerr<<"Unknown request type";
@@ -251,7 +255,7 @@ void Proxy::startHandlingConnections()
 
     struct sockaddr addr;
     socklen_t s_size;
-
+    int conId=1;
     while (true)
     {
         clientSocket = accept(m_listenSocket, (struct sockaddr *)&addr, &s_size);
@@ -260,7 +264,8 @@ void Proxy::startHandlingConnections()
         printf("\n __CONN ACCEPTED\n");
 
         /*JUST ONE THREAD FOR NOW*/
-        std::thread(threadHandle,std::ref(*this),clientSocket).detach();
+        conId++;
+        std::thread(threadHandle,std::ref(*this),clientSocket,conId).detach();
 
       
         

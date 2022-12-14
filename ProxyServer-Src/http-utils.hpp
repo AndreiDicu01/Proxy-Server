@@ -27,6 +27,8 @@ namespace Utils
         int getResponseLength(std::string resp);
         int getHeaderLength(std::string& resp);
         int ChunckedResponse(std::string resp);
+   
+        
     }
 }
 #endif

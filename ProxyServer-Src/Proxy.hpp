@@ -31,8 +31,8 @@ class Proxy
     ~Proxy();
 
     int connectToRequestedWeb(std::string host,std::string port);
-    int GET_RequestHandle(Request& req, int clientSock,int serverSock);
-    int CONNECT_RequestHandle(int clientSock,int serverSock);
+    int GET_RequestHandle(Request& req, int clientSock,int serverSock,int idCon,std::string host);
+    int CONNECT_RequestHandle(int clientSock,int serverSock,int idCon);
     public:
     /*------------------------------------------------*/
 
@@ -43,7 +43,7 @@ class Proxy
     void setListeningSocket();
     void startHandlingConnections();
  
-   friend  void threadHandle(Proxy& proxy,int sock);
+   friend  void threadHandle(Proxy& proxy,int sock,int conId);
 };
 
 #endif

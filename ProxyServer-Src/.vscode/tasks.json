@@ -12,6 +12,8 @@
 				"http-utils.cpp",
                 "Proxy.cpp",
                 "Request.cpp",
+				"Logger.cpp",
+				"Timer.cpp",
 				"-o",
 				"${fileDirname}/${fileBasenameNoExtension}"
 			],
