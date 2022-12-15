@@ -9,10 +9,10 @@
  Server-ul trebuie sa poata gestiona mai multe solicitari simultane, de aceea se vor utiliza mai multe thread-uri pentru a trata in paralel fiecare conexiune.
  ##
  Toate request-urile si raspunsurile pe care proxy-ul le proceseaza vor fi salvate in fisierul de proxy.log.Fiecare linie fisier respecta urmatorul format:
- *ID*: pentru fiecare conexiune va fi asignat un id, prin acest id putem identifica corespondenta dintre request si raspuns in fisierul de log
- *STATUS LINE
- *HOST
- *TIME
+ * ID: pentru fiecare conexiune va fi asignat un id, prin acest id putem identifica corespondenta dintre request si raspuns in fisierul de log
+ * STATUS LINE
+ * HOST
+ * TIME
 
 Scrierea in fisierul de log de catre fiecare thread va fi controlata printr-un semafor *logMutex* pentru a asigura consistenta fisierului
 ### Blocare trafic
