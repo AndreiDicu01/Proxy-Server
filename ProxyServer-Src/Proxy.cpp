@@ -2,6 +2,7 @@
 #include "http-utils.hpp"
 #include "Request.hpp"
 #include "Logger.hpp"
+#include <fstream>
 Proxy *Proxy::m_ProxyInstance = nullptr;
 
 Proxy &Proxy::createInstance(std::string ip, std::string port)
@@ -134,21 +135,18 @@ int Proxy::connectToRequestedWeb(std::string host, std::string port)
     freeaddrinfo(list);
     return webSock;
 }
-int Proxy::CONNECT_RequestHandle(int clientSock,int serverSock,int idCon)
+int Proxy::CONNECT_RequestHandle(int clientSock, int serverSock, int idCon)
 {
-  if(Utils::EstablishHTTPTunnel(clientSock)==-1)
-    return -1;
+    if (Utils::EstablishHTTPTunnel(clientSock) == -1)
+        return -1;
 
-    if(Utils::HTTPTunneling(clientSock,serverSock)==-1)
-    return -1;
-
+    if (Utils::HTTPTunneling(clientSock, serverSock) == -1)
+        return -1;
 
     return 1;
-
-
 }
 
-int Proxy::GET_RequestHandle(Request &req, int clientSock, int serverSock,int idCon,std::string host)
+int Proxy::GET_RequestHandle(Request &req, int clientSock, int serverSock, int idCon, std::string host)
 {
     int check;
     if (Utils::ForwardHTTP(serverSock, req.getRequest()) < 0)
@@ -159,46 +157,48 @@ int Proxy::GET_RequestHandle(Request &req, int clientSock, int serverSock,int id
 
     std::string response;
     check = Utils::RecieveResponse(serverSock, response);
-    
+
     if (check == -1)
     {
         std::cerr << "Error recieving response from server";
         return -1;
     }
     else if (check == CHUNKED_RESPONSE)
-    {   
-          
+    {
+       
         if (Utils::RecieveChunked(clientSock, serverSock, response) == -1)
             return -1;
-        close(serverSock);
-       //  Logger::logResponse(idCon,response,host);
+        Logger::logResponse(idCon, response, req.getHost());
+      
     }
     else
-    {     
+    {
+        
         if (Utils::RecieveUnChunkedResponse(serverSock, response) == -1)
         {
             std::cerr << "Error recieving unchunked response";
             return -1;
         }
+      
         close(serverSock);
         if (Utils::ForwardHTTP(clientSock, response) == -1)
         {
             std::cerr << "Error sending unchunked";
             return -1;
         }
-        // Logger::logResponse(idCon,response,host);
+        Logger::logResponse(idCon, response, req.getHost());
     }
-   
+
     return 1;
 }
-void threadHandle(Proxy& proxy,int clientSocket,int conId)
+void threadHandle(Proxy &proxy, int clientSocket, int conId)
 {
-    std::cout<<"\nTHREAD HANDLE";
+    std::cout << "\nTHREAD HANDLE";
     int check;
     int webSock;
     std::string httpReq;
 
-    if(check = Utils::ReadClientRequest(clientSocket, httpReq)==-1)
+    if (check = Utils::ReadClientRequest(clientSocket, httpReq) == -1)
         return;
     if (check == -1)
     {
@@ -206,9 +206,9 @@ void threadHandle(Proxy& proxy,int clientSocket,int conId)
         // handle error
         return;
     }
-   
+
     Request req(httpReq);
-    Logger::logRequest(conId,req);
+    Logger::logRequest(conId, req);
     std::string port;
     if (req.getPort().size() == 0)
         port = "80"; // if no port is specified in the request, the default HTTP port is used
@@ -228,23 +228,32 @@ void threadHandle(Proxy& proxy,int clientSocket,int conId)
         return;
     }
 
-    Type header=req.getReqType();
-    switch(header)
+    if (req.getHost().find("eun.org") != std::string::npos)
     {
-        case Type::GET:
-            proxy.GET_RequestHandle(req, clientSocket, webSock,conId,req.getHost());
-            break;
-        case Type::CONNECT:
-            proxy.CONNECT_RequestHandle(clientSocket,webSock,conId);
-            break;
-        case Type::POST:
-            proxy.GET_RequestHandle(req,clientSocket,webSock,conId,req.getHost());
-            break;
-        default:
-            std::cerr<<"Unknown request type";
+        std::string response = "HTTP/1.1 403 Forbidden\n\n";
+        response += "<html><head><title>403 Forbidden</title><style>body { font-family: sans-serif; margin: 0; padding: 0; background: url('https://t3.ftcdn.net/jpg/03/02/37/80/360_F_302378042_I4tT3YKlSNhvZWSreNzMPzbcvVrV6QvF.jpg') repeat; } #message { display: flex; align-items: center; justify-content: center; height: 100vh; width: 100vw; } #message h1 { font-size: 2em; margin: 0; padding: 0; } #message p { font-size: 1.5em; margin: 0; padding: 0; }</style></head><body><div id='message'><div><h1>403 Forbidden</h1><p> ATM Blocked this site</p></div></div></body></html>\n";
+        Utils::SendString(clientSocket, response);
+        close(clientSocket);
+        close(webSock);
+        return;
+    }
+    Type header = req.getReqType();
+    switch (header)
+    {
+    case Type::GET:
+        proxy.GET_RequestHandle(req, clientSocket, webSock, conId, req.getHost());
+        break;
+    case Type::CONNECT:
+        proxy.CONNECT_RequestHandle(clientSocket, webSock, conId);
+        break;
+    case Type::POST:
+        proxy.GET_RequestHandle(req, clientSocket, webSock, conId, req.getHost());
+        break;
+    default:
+        std::cerr << "Unknown request type";
         break;
     }
-    
+
     close(clientSocket);
     close(webSock);
     // redirect requests
@@ -255,7 +264,7 @@ void Proxy::startHandlingConnections()
 
     struct sockaddr addr;
     socklen_t s_size;
-    int conId=1;
+    int conId = 1;
     while (true)
     {
         clientSocket = accept(m_listenSocket, (struct sockaddr *)&addr, &s_size);
@@ -265,11 +274,7 @@ void Proxy::startHandlingConnections()
 
         /*JUST ONE THREAD FOR NOW*/
         conId++;
-        std::thread(threadHandle,std::ref(*this),clientSocket,conId).detach();
-
-      
-        
+        std::thread(threadHandle, std::ref(*this), clientSocket, conId).detach();
     }
     close(clientSocket);
-
 }

@@ -269,7 +269,6 @@ int Utils::HTTPTunneling(int clientSock, int serverSock)
                 }
                 else if (i == serverSock)
                 {
-                    std::cout << "\nBROWSER RESP: " << buff;
                     memset(buff,0,RECV_BUFF_LENGTH);   
                     ret=recv(serverSock,buff,RECV_BUFF_LENGTH,0);
                     //ret = Utils::RecieveString(serverSock, buff);
