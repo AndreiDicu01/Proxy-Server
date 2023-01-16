@@ -27,7 +27,16 @@ namespace Utils
         int getResponseLength(std::string resp);
         int getHeaderLength(std::string &resp);
         int ChunckedResponse(std::string resp);
+        bool needsValidation(std::string& resp);
 
+        /*--------------------------------------*/
+        double getExpireTime(std::string& resp);
+        double getDateExpireTime(std::string& resp);
+        double getCacheExpireControl(std::string& resp);
+        std::string getETAG(std::string &resp);
+        /*--------------------------------------*/
+
+        std::string getFieldValue(std::string target,std::string header);
     }
 }
 #endif

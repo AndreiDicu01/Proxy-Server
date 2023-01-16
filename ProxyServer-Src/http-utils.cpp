@@ -1,5 +1,8 @@
 #include "http-utils.hpp"
 #include "Proxy.hpp"
+#include <ctime>
+#include <iomanip>
+#include <sstream>
 #define RECV_BUFF_LENGTH 65536
 int Utils::ReadClientRequest(int fd, std::string &request)
 {
@@ -232,7 +235,7 @@ int Utils::HTTPTunneling(int clientSock, int serverSock)
     FD_SET(serverSock, &sockSet_org);
 
     int ret;
-    char buff[RECV_BUFF_LENGTH+1];
+    char buff[RECV_BUFF_LENGTH + 1];
     while (true)
     {
         fd_set sockSet_tmp = sockSet_org;
@@ -248,10 +251,10 @@ int Utils::HTTPTunneling(int clientSock, int serverSock)
             {
                 if (i == clientSock)
                 {
-                    
-                    //ret = Utils::RecieveResponse(clientSock, buff);
-                    memset(buff,0,RECV_BUFF_LENGTH);
-                    ret=recv(clientSock,buff,RECV_BUFF_LENGTH,0);
+
+                    // ret = Utils::RecieveResponse(clientSock, buff);
+                    memset(buff, 0, RECV_BUFF_LENGTH);
+                    ret = recv(clientSock, buff, RECV_BUFF_LENGTH, 0);
                     if (ret == -1)
                     {
                         std::cerr << "Browser send tunneling error";
@@ -260,7 +263,7 @@ int Utils::HTTPTunneling(int clientSock, int serverSock)
                     else if (ret == 0)
                         return 1;
 
-                    ret =send(serverSock,buff,ret,0);
+                    ret = send(serverSock, buff, ret, 0);
                     if (ret == -1)
                     {
                         std::cerr << "Forwarding tunneling error";
@@ -269,9 +272,9 @@ int Utils::HTTPTunneling(int clientSock, int serverSock)
                 }
                 else if (i == serverSock)
                 {
-                    memset(buff,0,RECV_BUFF_LENGTH);   
-                    ret=recv(serverSock,buff,RECV_BUFF_LENGTH,0);
-                    //ret = Utils::RecieveString(serverSock, buff);
+                    memset(buff, 0, RECV_BUFF_LENGTH);
+                    ret = recv(serverSock, buff, RECV_BUFF_LENGTH, 0);
+                    // ret = Utils::RecieveString(serverSock, buff);
                     if (ret == -1)
                     {
                         std::cerr << "Connect server send ";
@@ -280,7 +283,7 @@ int Utils::HTTPTunneling(int clientSock, int serverSock)
                     if (ret == 0)
                         return 1;
 
-                    ret=send(clientSock,buff,ret,0);
+                    ret = send(clientSock, buff, ret, 0);
                     //  ret = Utils::ForwardHTTP(clientSock, buff);
                     if (ret == -1)
                     {
@@ -295,4 +298,116 @@ int Utils::HTTPTunneling(int clientSock, int serverSock)
     return 1;
 }
 
+std::string Utils::ResponseParser::getFieldValue(std::string target, std::string header)
+{
+    size_t pos = target.find(header);
+    size_t end;
+    size_t len = header.length();
+    std::string value;
+    if (pos != std::string::npos)
+    {
+        end = target.find_first_of("\n", pos);
+        value = target.substr(pos + len, end - pos - len);
+        return value;
+    }
+    else
+    {
+        throw 100;
+    }
+}
+
+double Utils::ResponseParser::getCacheExpireControl(std::string &resp)
+{
+    if (resp.find("max-age") != std::string::npos)
+    {
+        std::string aux = Utils::ResponseParser::getFieldValue(resp, "max-age=");
+        return std::stod(aux);
+    }
+    else
+    {
+        return INT64_MAX;
+    }
+}
+double Utils::ResponseParser::getDateExpireTime(std::string &resp)
+{
+    std::string expireHeader = Utils::ResponseParser::getFieldValue(resp, "Expires: ");
+    std::string dateHeader = Utils::ResponseParser::getFieldValue(resp, "Date: ");
+
+    std::tm date, expire;
+    std::istringstream date_stream(dateHeader);
+    std::istringstream expire_stream(expireHeader);
+
+    date_stream >> std::get_time(&date, "%a, %d %b %Y %T $Z");
+    expire_stream >> std::get_time(&expire, "%a, %d %b %Y %T %Z");
+
+    std::time_t date_t = std::mktime(&date);
+    std::time_t expire_t = std::mktime(&expire);
+
+    double age = std::difftime(expire_t, date_t);
+
+    return age;
+}
+double Utils::ResponseParser::getExpireTime(std::string &resp)
+{
+    double exp;
+    try
+    {
+        if (resp.find("Cache-control: ") != std::string::npos)
+        {
+            exp = Utils::ResponseParser::getCacheExpireControl(resp);
+        }
+        else if (resp.find("Expires: ") != std::string::npos)
+        {
+            exp = Utils::ResponseParser::getDateExpireTime(resp);
+        }
+        else
+            exp = INT64_MAX;
+    }
+    catch (const std::exception &e)
+    {
+        exp = INT64_MAX;
+    }
+
+    return exp;
+}
+
+std::string Utils::ResponseParser::getETAG(std::string &resp)
+{
+
+    try
+    {
+        std::string TAG = Utils::ResponseParser::getFieldValue(resp, "ETAG: ");
+        return TAG;
+    }
+    catch (int c)
+    {
+        return "";
+    }
+}
+
+bool Utils::ResponseParser::needsValidation(std::string &resp)
+{
+    bool ret = false;
+    std::string field;
+    if (resp.find("Cache-control") != std::string::npos)
+    {
+        if (resp.find("must-revalidate") != std::string::npos)
+            ret = true;
+    }
+    if (resp.find("ETag") != std::string::npos)
+    {
+        ret=true;
+    }
+     if (resp.find("ETag") != std::string::npos)
+    {
+        ret=true;
+    }
+     if (resp.find("Last-Modified") != std::string::npos)
+    {
+        ret=true;
+    }
+    ret = true;
+
+    return ret;
+}
 

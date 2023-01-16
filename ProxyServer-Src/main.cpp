@@ -1,5 +1,5 @@
 #include "Proxy.hpp"
-
+#include "Cache.hpp"
 int main()
 {
     std::string serverIP = "0.0.0.0";
@@ -7,6 +7,7 @@ int main()
     try
     {
         Proxy &httpProxy = Proxy::createInstance(serverIP, port);
+       // WebCache& cache=WebCache::createInstance(100);
         httpProxy.setListeningSocket();
         httpProxy.startHandlingConnections();
     }

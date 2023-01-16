@@ -12,13 +12,12 @@
 class Request;
 class Logger
 {
-    private:
+private:
     static void writeLogFile(std::string line);
-    public:
-    static void logRequest(int pairID,Request& req);
-    static void logResponse(int pairID,std::string& resp,std::string host);
 
+public:
+    static void logRequest(int pairID, Request &req);
+    static void logResponse(int pairID, std::string &resp, std::string host);
 };
-
 
 #endif

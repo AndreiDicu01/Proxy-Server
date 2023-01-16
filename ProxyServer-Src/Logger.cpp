@@ -6,11 +6,13 @@
 std::mutex logMutex;
 void Logger::writeLogFile(std::string line)
 {
-    std::lock_guard<std::mutex> lock(logMutex);
+    logMutex.lock();
+    //std::lock_guard<std::mutex> lock(logMutex);
     std::string fName = "proxy.log";
     std::ofstream file(fName, ios::app);
     file << line;
     file.close();
+    logMutex.unlock();
 }
 void Logger::logRequest(int pairID, Request &req)
 {

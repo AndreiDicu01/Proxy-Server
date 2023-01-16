@@ -2,9 +2,12 @@
 #include "http-utils.hpp"
 #include "Request.hpp"
 #include "Logger.hpp"
+#include "ThreadPool.hpp"
+#include "Cache.hpp"
 #include <fstream>
-Proxy *Proxy::m_ProxyInstance = nullptr;
 
+Proxy *Proxy::m_ProxyInstance = nullptr;
+std::mutex cacheMutex;
 Proxy &Proxy::createInstance(std::string ip, std::string port)
 {
     if (m_ProxyInstance != nullptr)
@@ -154,7 +157,10 @@ int Proxy::GET_RequestHandle(Request &req, int clientSock, int serverSock, int i
         std::cerr << "Error forwarding request to server\n";
         return -1;
     }
-
+    std::string rCached;
+ //   cacheMutex.lock();
+ //   rCached=WebCache::getInstance().getCached(req.getStatusLine(),Timer::getCurrentDateTime());
+  //  cacheMutex.unlock();
     std::string response;
     check = Utils::RecieveResponse(serverSock, response);
 
@@ -228,7 +234,7 @@ void threadHandle(Proxy &proxy, int clientSocket, int conId)
         return;
     }
 
-    if (req.getHost().find("eun.org") != std::string::npos)
+    if (req.getHost().find("mediu") != std::string::npos)
     {
         std::string response = "HTTP/1.1 403 Forbidden\n\n";
         response += "<html><head><title>403 Forbidden</title><style>body { font-family: sans-serif; margin: 0; padding: 0; background: url('https://t3.ftcdn.net/jpg/03/02/37/80/360_F_302378042_I4tT3YKlSNhvZWSreNzMPzbcvVrV6QvF.jpg') repeat; } #message { display: flex; align-items: center; justify-content: center; height: 100vh; width: 100vw; } #message h1 { font-size: 2em; margin: 0; padding: 0; } #message p { font-size: 1.5em; margin: 0; padding: 0; }</style></head><body><div id='message'><div><h1>403 Forbidden</h1><p> ATM Blocked this site</p></div></div></body></html>\n";
@@ -265,6 +271,7 @@ void Proxy::startHandlingConnections()
     struct sockaddr addr;
     socklen_t s_size;
     int conId = 1;
+    ThreadPool threads(100);
     while (true)
     {
         clientSocket = accept(m_listenSocket, (struct sockaddr *)&addr, &s_size);
@@ -274,7 +281,7 @@ void Proxy::startHandlingConnections()
 
         /*JUST ONE THREAD FOR NOW*/
         conId++;
-        std::thread(threadHandle, std::ref(*this), clientSocket, conId).detach();
+        threads.add(threadHandle,clientSocket,conId);
     }
     close(clientSocket);
 }

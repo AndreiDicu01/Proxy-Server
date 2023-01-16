@@ -14,6 +14,8 @@
                 "Request.cpp",
 				"Logger.cpp",
 				"Timer.cpp",
+				"Cache.cpp",
+				"Response.cpp",
 				"-o",
 				"${fileDirname}/${fileBasenameNoExtension}"
 			],

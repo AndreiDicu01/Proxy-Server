@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <string>
 
+#ifndef REQ
+#define REQ
 enum class Type
 { GET,POST,CONNECT,INVALID};
 class Request
@@ -27,3 +29,5 @@ class Request
 
 
 };
+
+#endif
