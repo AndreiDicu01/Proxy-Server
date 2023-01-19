@@ -10,6 +10,8 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <list>
+#include "Exceptions.hpp"
 #define MAX_PENDING_CONNECTIONS 100
 class Request;
 class Proxy
@@ -18,6 +20,7 @@ class Proxy
 
     std::string m_address;
     std::string m_port;
+    std::list<std::string>m_blockedWebs;
     int m_listenSocket;
 
     bool m_isSet;

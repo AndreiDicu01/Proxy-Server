@@ -1,6 +1,8 @@
 #include <iostream>
 #include <string>
 #include "Request.hpp"
+#ifndef RESPONSE
+#define RESPONSE
 class Response
 {
     private:
@@ -15,4 +17,7 @@ class Response
     double getExpireTime();
     bool getRevalidate();
     std::string getResponse();
+    std::string canCache();
 };
+
+#endif

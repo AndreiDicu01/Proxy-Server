@@ -41,7 +41,14 @@ void Logger::logRequest(int pairID, Request &req)
     reqLine += "]\n";
     writeLogFile(reqLine);
 }
-
+void Logger::logCacheHit(int pairId)
+{
+    std::string line="In Cache";
+    line+=" ";
+    line+=std::to_string(pairId);
+    line+="\n";
+    writeLogFile(line);
+}
 void Logger::logResponse(int pairID, std::string &resp, std::string host)
 {
 
@@ -60,3 +67,15 @@ void Logger::logResponse(int pairID, std::string &resp, std::string host)
     repLine += "[" + Timer::getCurrentDateTime() + "]\n";
     writeLogFile(repLine);
 }
+
+
+ void Logger::logCacheActions(std::string str,int pairId)
+ {
+    std::string line;
+    line=str;
+    line+=" ";
+    line+=std::to_string(pairId);
+    line+="\n";
+    writeLogFile(line);
+
+ }

@@ -1,6 +1,7 @@
 #include "http-utils.hpp"
 #include "Proxy.hpp"
 #include <ctime>
+#include <vector>
 #include <iomanip>
 #include <sstream>
 #define RECV_BUFF_LENGTH 65536
@@ -31,58 +32,79 @@ int Utils::ReadClientRequest(int fd, std::string &request)
 
 int Utils::RecieveUnChunkedResponse(int sock, std::string &resp)
 {
-    int headerLen;
-    int codeLen;
-    int totalLen = 0, bytesRead = 0;
-
-    bytesRead = resp.length();
-    headerLen = Utils::ResponseParser::getHeaderLength(resp);
-
-    if (headerLen == -1)
-        return -1;
-    codeLen = Utils::ResponseParser::getResponseLength(resp);
-    if (codeLen == -1)
-        return -1;
-
-    totalLen = headerLen + codeLen;
-
-    char buff[RECV_BUFF_LENGTH + 1];
-    int ret;
-    while (bytesRead < totalLen)
+    int allLen = 0;
+    int hasGot=resp.length();
+    int numbytes = 0;
+    if (resp.find("HTTP/1.1 200 OK") == std::string::npos)
     {
-        ret = recv(sock, buff, RECV_BUFF_LENGTH, 0);
-        if (ret == -1)
-        {
-            perror("recv");
-            return ret;
-        }
-        bytesRead += ret;
-        resp += buff;
-        std::memset(buff, 0, RECV_BUFF_LENGTH);
+      allLen = 0;
     }
-
-    return bytesRead;
+    else
+    {
+      int len = Utils::ResponseParser::getResponseLength(resp);
+      if (len < 0)
+      {
+        return false;
+      }
+      int headlen = Utils::ResponseParser::getHeaderLength(resp);
+      if (headlen < 0)
+      {
+        return false;
+      }
+      allLen = headlen + len;
+    }
+    int i = 0;
+    while (hasGot < allLen)
+    {
+      std::vector<char> temp;
+      temp.resize(65536);
+      if ((numbytes = recv(sock, &temp[0], 65535, 0)) == -1)
+      {
+        std::perror("recv");
+        return false;
+      }
+      hasGot += numbytes;
+      temp.resize(numbytes);
+      std::string tempStr(temp.begin(), temp.end());
+      if (hasGot >= allLen)
+      {
+        resp += tempStr;
+        break;
+      }
+      else
+      {
+        resp += tempStr;
+      }
+      i++;
+    }
+    return true;
 }
 int Utils::RecieveChunked(int client, int server, std::string &resp)
 {
     if (ForwardHTTP(client, resp) == -1)
         return -1;
 
-    char buff[RECV_BUFF_LENGTH + 1];
-    int ret;
+     std::string endMark = "0\r\n\r\n";
     while (true)
     {
-        ret = recv(server, buff, RECV_BUFF_LENGTH, 0);
-        if (ret == -1)
-            return ret;
-
-        if (ret == 0)
-            break;
-
-        if (ForwardHTTP(client, buff) == -1)
-            return -1;
+      char temp[65536];
+      int numbytes = 0;
+      if ((numbytes = recv(server, temp, 65536, 0)) == -1)
+      {
+        std::perror("chuncked recv server");
+        return false;
+      }
+      if (send(client, temp, numbytes, 0) == -1)
+      {
+        std::perror("chuncked send to client");
+        return false;
+      }
+      std::string tempStr(temp);
+      if (tempStr.find(endMark) != std::string::npos || numbytes == 0)
+      { 
+        return true;
+      }
     }
-
     return true;
 }
 
@@ -167,8 +189,13 @@ int Utils::SendString(int sock, std::string str)
 }
 int Utils::ResponseParser::ChunckedResponse(std::string resp)
 {
-    if (resp.find("Transfer-Encoding: chunked") != std::string::npos)
-        return true;
+    if (resp.find("Transfer-Encoding:") != std::string::npos)
+    {
+        if (resp.find("chunked") != std::string::npos)
+        {
+            return true;
+        }
+    }
 
     return false;
 }
@@ -199,12 +226,12 @@ int Utils::RecieveResponse(int sock, std::string &resp)
     char buff[RECV_BUFF_LENGTH + 1];
 
     bytesRecv = recv(sock, buff, RECV_BUFF_LENGTH, 0);
-    resp += buff;
     if (bytesRecv < 0)
     {
         std::perror("Response recv");
         return -1;
     }
+    resp += buff;
     if (Utils::ResponseParser::ChunckedResponse(resp))
         return CHUNKED_RESPONSE;
 
@@ -396,18 +423,33 @@ bool Utils::ResponseParser::needsValidation(std::string &resp)
     }
     if (resp.find("ETag") != std::string::npos)
     {
-        ret=true;
+        ret = true;
     }
-     if (resp.find("ETag") != std::string::npos)
+    if (resp.find("ETag") != std::string::npos)
     {
-        ret=true;
+        ret = true;
     }
-     if (resp.find("Last-Modified") != std::string::npos)
+    if (resp.find("Last-Modified") != std::string::npos)
     {
-        ret=true;
+        ret = true;
     }
     ret = true;
 
     return ret;
 }
 
+std::string Utils::ResponseParser::canCache(const std::string &response)
+{
+    if (response.find("Cache-Control") != std::string::npos)
+    {
+        if (response.find("no-store") != std::string::npos)
+        {
+            return "no-store";
+        }
+        else if (response.find("private") != std::string::npos)
+        {
+            return "private";
+        }
+    }
+    return "Can cache";
+}

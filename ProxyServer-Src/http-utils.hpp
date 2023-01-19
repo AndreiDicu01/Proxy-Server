@@ -34,6 +34,7 @@ namespace Utils
         double getDateExpireTime(std::string& resp);
         double getCacheExpireControl(std::string& resp);
         std::string getETAG(std::string &resp);
+        std::string canCache(const std::string & response);
         /*--------------------------------------*/
 
         std::string getFieldValue(std::string target,std::string header);
