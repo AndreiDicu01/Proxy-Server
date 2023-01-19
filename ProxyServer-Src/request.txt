@@ -1,0 +1,14 @@
+GET /YisongZou/HTTP-Caching-Proxy/tree/master/src HTTP/1.1
+Host: github.com
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101 Firefox/102.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate
+Connection: close
+Cookie: _octo=GH1.1.447552873.1666554229; logged_in=yes; _device_id=d54a4c76b05a381882b2b7bc118ed32c; user_session=VLFJrY45I9gjUwdpEOv3tf2CWl-VFxUeUftSqF-WRfK3LoeZ; __Host-user_session_same_site=VLFJrY45I9gjUwdpEOv3tf2CWl-VFxUeUftSqF-WRfK3LoeZ; dotcom_user=stefanenache3; has_recent_activity=1; color_mode=%7B%22color_mode%22%3A%22auto%22%2C%22light_theme%22%3A%7B%22name%22%3A%22light%22%2C%22color_mode%22%3A%22light%22%7D%2C%22dark_theme%22%3A%7B%22name%22%3A%22dark%22%2C%22color_mode%22%3A%22dark%22%7D%7D; _gh_sess=IlFQZSyIss9y87NUlY2HzGj85b9Ol%2BxZ8aOZc%2BOf8VZtzSiclYzk7JoKRvrpzy%2B%2B%2BAxpVXGjoDLK8TKpStFGgGIZNUhEWNReK2iS%2BpuUFzdH8ep5riqlMUdPeSEnMjqhJJJlIOquUQmWCbhAzxO9JjFFmW2BPNlg1wkQ8d5z3G1yxlrEHUmUsBw6rodQwkruD5rc2PpXBoMarT%2FzUb9W7UHj1dkkw%2Fk1T9iFtziqJAFmlWyj3UOHVKsb44D5sY6fGr65A0VKcqki03tG8S8%2BKlNsnbpGluIQn91ExsCsF68%3D--%2F8UteJXIU9%2BlCJ5L--SmYqiVelxDiKPEypM4o%2FZQ%3D%3D; preferred_color_mode=dark; tz=America%2FNew_York
+Upgrade-Insecure-Requests: 1
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Site: none
+Sec-Fetch-User: ?1
+If-None-Match: W/"8e88632fa045f2b1351918ddbc2903c7"
