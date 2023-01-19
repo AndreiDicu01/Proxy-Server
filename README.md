@@ -6,7 +6,17 @@
  * GET
  * CONNECT 
  ##
- Server-ul trebuie sa poata gestiona mai multe solicitari simultane, de aceea se vor utiliza mai multe thread-uri pentru a trata in paralel fiecare conexiune.
+ Server-ul trebuie sa poata gestiona mai multe solicitari simultane, de aceea se vor utiliza mai multe thread-uri pentru a trata in paralel fiecare conexiune.Pentru a spori performantele aplicatiei am implementat un Thread pool.Se reduce overhead-ul de a crea si distruge thread-urile prin crearea initiala a unor thread-uri care sa ruleze pe tot parcusul executiei.Acest lucru ne permite si sa controlam numarul maxim de conexiuni procesate intr-un singur moment de catre server.
+ ##
+ Tot pentru sporirea performantelor si eficientizarea timpului de raspuns, server-ul 
+stocheaza raspunsurile la care se poate cache.Pentru a gestiona cache-ul am 
+implementat clasa WebCache.Prin aceasta am implementat un mecansim de tip LRU 
+Cache cu scopul de a eficientiza consumul de memorie prin stocarea doar cererilor care 
+au fost utilizate cel mai des.
+ In clasa Reponse si in Cache salvam politicile de cache.Header-ul Cache-Control este 
+utilizat pentru a spceifica politicile de cache intr-un raspuns HTTP.Acesti parametri ne 
+permit sa vedem daca putem stoca raspunsul in cache-ul Proxy sau pentru cat timp.
+
  ##
  Toate request-urile si raspunsurile pe care proxy-ul le proceseaza vor fi salvate in fisierul de proxy.log.Fiecare linie fisier respecta urmatorul format:
  * ID: pentru fiecare conexiune va fi asignat un id, prin acest id putem identifica corespondenta dintre request si raspuns in fisierul de log
